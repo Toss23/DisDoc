@@ -345,13 +345,27 @@
   updateCounter();
 
   function syncInputs(slider, input, callback) {
-    slider.addEventListener('input', () => { input.value = slider.value; callback(); });
+    // Загрузка сохраненного значения при старте
+    const saved = localStorage.getItem('tyh_' + input.id);
+    if (saved !== null) {
+      slider.value = saved;
+      input.value = saved;
+    }
+
+    slider.addEventListener('input', () => { 
+      input.value = slider.value; 
+      localStorage.setItem('tyh_' + input.id, slider.value);
+      callback(); 
+    });
+    
     input.addEventListener('input', () => { 
         let val = parseFloat(input.value);
         if(isNaN(val)) val = slider.min;
         if(val < slider.min) val = slider.min;
         if(val > slider.max) val = slider.max;
         slider.value = val; 
+        input.value = val;
+        localStorage.setItem('tyh_' + input.id, val);
         callback(); 
     });
   }
@@ -468,11 +482,18 @@
   syncInputs(enemyLuckSlider, enemyLuckInput, updateLuck);
   
   weightInputs.forEach(input => {
+    // Загрузка сохраненного значения при старте
+    const saved = localStorage.getItem('tyh_' + input.id);
+    if (saved !== null) {
+      input.value = saved;
+    }
+
     input.addEventListener('input', () => {
       let val = parseFloat(input.value);
       if (isNaN(val) || val < 1) {
         input.value = 1;
       }
+      localStorage.setItem('tyh_' + input.id, input.value);
       updateLuck();
     });
   });
