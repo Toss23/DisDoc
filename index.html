@@ -258,6 +258,29 @@
             </div>
           </div>
         </div>
+        
+        <div class="calc-controls" style="grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px;">
+          <div class="control-group">
+            <label style="color: #b0b0b0;">Обычный (вес)</label>
+            <input type="number" id="weightCommon" min="1" value="1000000" style="width: 100%;">
+          </div>
+          <div class="control-group">
+            <label style="color: #4a8eff;">Необычный</label>
+            <input type="number" id="weightMagic" min="1" value="10000" style="width: 100%;">
+          </div>
+          <div class="control-group">
+            <label style="color: #ffd700;">Редкий</label>
+            <input type="number" id="weightRare" min="1" value="100" style="width: 100%;">
+          </div>
+          <div class="control-group">
+            <label style="color: #c084fc;">Эпический</label>
+            <input type="number" id="weightEpic" min="1" value="10" style="width: 100%;">
+          </div>
+          <div class="control-group">
+            <label style="color: #ff8c42;">Легендарный</label>
+            <input type="number" id="weightLegendary" min="1" value="1" style="width: 100%;">
+          </div>
+        </div>
         <div class="result-stats" style="grid-template-columns: 1fr 1fr 1fr;">
           <div class="res-item"><span class="label">Alpha (Множитель)</span><span class="value" id="luckAlphaRes">0.8</span></div>
           <div class="res-item"><span class="label">Шанс обычного</span><span class="value" id="luckCommonRes">95%</span></div>
@@ -414,13 +437,21 @@
     }
   });
 
-  const baseWeights = [1000000, 10000, 100, 1, 0.01];
+  const weightInputs = [
+    document.getElementById('weightCommon'),
+    document.getElementById('weightMagic'),
+    document.getElementById('weightRare'),
+    document.getElementById('weightEpic'),
+    document.getElementById('weightLegendary')
+  ];
 
   function updateLuck() {
     let L = parseFloat(luckInput.value);
     let K = parseFloat(enemyLuckInput.value);
     let cappedLuck = Math.min(L, 1000);
     let alpha = K / (K + cappedLuck);
+    
+    let baseWeights = weightInputs.map(input => Math.max(1, parseFloat(input.value) || 1));
     let adjusted = baseWeights.map(w => Math.pow(w, alpha));
     let sum = adjusted.reduce((a, b) => a + b, 0);
     let chances = adjusted.map(w => (w / sum) * 100);
@@ -435,6 +466,17 @@
 
   syncInputs(luckSlider, luckInput, updateLuck);
   syncInputs(enemyLuckSlider, enemyLuckInput, updateLuck);
+  
+  weightInputs.forEach(input => {
+    input.addEventListener('input', () => {
+      let val = parseFloat(input.value);
+      if (isNaN(val) || val < 1) {
+        input.value = 1;
+      }
+      updateLuck();
+    });
+  });
+  
   updateLuck();
 </script>
 
