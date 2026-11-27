@@ -5,163 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Train Your Hero — Design Document</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-  :root {
-    --bg-dark: #0d0d1a;
-    --bg-card: #16162a;
-    --bg-card-hover: #1c1c35;
-    --accent: #ffb800;
-    --accent-glow: #ffb80080;
-    --magic: #a855f7;
-    --text: #e4e4e7;
-    --text-dim: #9494a8;
-    --border: #2a2a45;
-    --success: #10b981;
-    --danger: #ef4444;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg-dark);
-    background-image: radial-gradient(ellipse at top, #1a1a35 0%, transparent 50%), radial-gradient(ellipse at bottom right, #2a1a35 0%, transparent 50%);
-    color: var(--text);
-    line-height: 1.7;
-    min-height: 100vh;
-  }
-
-  .progress-bar {
-    position: fixed; top: 0; left: 0; height: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--magic));
-    z-index: 1000; transition: width 0.2s; box-shadow: 0 0 10px var(--accent-glow);
-  }
-
-  header {
-    padding: 60px 40px 40px; text-align: center;
-    border-bottom: 1px solid var(--border); position: relative; overflow: hidden;
-  }
-
-  header::before {
-    content: ''; position: absolute; top: -50%; left: 50%; transform: translateX(-50%);
-    width: 600px; height: 600px; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-    opacity: 0.15; pointer-events: none;
-  }
-
-  header h1 {
-    font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--accent), #ffd966, var(--magic));
-    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: 12px; position: relative;
-  }
-
-  .subtitle { color: var(--text-dim); letter-spacing: 0.3em; text-transform: uppercase; font-size: 0.85rem; position: relative; }
-
-  .meta { display: flex; gap: 24px; justify-content: center; margin-top: 24px; flex-wrap: wrap; position: relative; }
-  .meta-tag { padding: 6px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; font-size: 0.85rem; color: var(--text-dim); }
-  .meta-tag span { color: var(--accent); font-weight: 600; }
-
-  .container { display: grid; grid-template-columns: 260px 1fr; max-width: 1400px; margin: 0 auto; gap: 40px; padding: 40px; }
-
-  nav { position: sticky; top: 40px; align-self: start; max-height: calc(100vh - 80px); overflow-y: auto; padding-right: 12px; }
-  nav::-webkit-scrollbar { width: 4px; } nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  nav h3 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 16px; padding-left: 12px; }
-  nav a { display: block; padding: 10px 12px; color: var(--text-dim); text-decoration: none; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s; border-left: 2px solid transparent; margin-bottom: 2px; }
-  nav a:hover { color: var(--text); background: var(--bg-card); }
-  nav a.active { color: var(--accent); background: var(--bg-card); border-left-color: var(--accent); }
-
-  main { max-width: 900px; }
-  section { margin-bottom: 60px; scroll-margin-top: 40px; animation: fadeIn 0.5s ease-out; }
-  section h2 { font-size: 1.8rem; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 12px; }
-  section h2::before { content: ''; width: 4px; height: 28px; background: linear-gradient(180deg, var(--accent), var(--magic)); border-radius: 2px; }
-  section h3 { font-size: 1.15rem; color: var(--accent); margin: 24px 0 12px; }
-  p { margin-bottom: 12px; color: var(--text); }
-  ul, ol { padding-left: 24px; margin-bottom: 16px; }
-  li { margin-bottom: 8px; }
-  strong { color: #fff; font-weight: 600; }
-
-  /* ===== INTERACTIVE WIDGETS ===== */
-  .calc-box {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 24px; margin: 20px 0; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  }
-  
-  .formula-display {
-    text-align: center; font-size: 1.2rem; font-family: 'Courier New', Courier, monospace;
-    background: #0d0d1a; padding: 16px; border-radius: 8px; border: 1px solid var(--border);
-    color: var(--accent); margin-bottom: 24px;
-  }
-
-  .calc-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-  @media (max-width: 600px) { .calc-controls { grid-template-columns: 1fr; } }
-  
-  .control-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dim); font-size: 0.9rem; }
-  .input-row { display: flex; align-items: center; gap: 12px; }
-  
-  input[type="range"] {
-    flex: 1; -webkit-appearance: none; background: transparent; height: 6px; border-radius: 3px; background: #2a2a45; outline: none;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
-    background: var(--accent); cursor: pointer; box-shadow: 0 0 10px var(--accent-glow); transition: transform 0.1s;
-  }
-  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-  
-  input[type="number"] {
-    width: 80px; padding: 8px; background: #0d0d1a; border: 1px solid var(--border);
-    border-radius: 6px; color: #fff; font-family: inherit; font-size: 0.95rem; text-align: center; outline: none;
-  }
-  input[type="number"]:focus { border-color: var(--accent); }
-
-  .chart-container { position: relative; height: 300px; width: 100%; margin-top: 20px; }
-  
-  .result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-  .res-item { background: #0d0d1a; padding: 16px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
-  .res-item .label { color: var(--text-dim); font-size: 0.85rem; display: block; margin-bottom: 4px; }
-  .res-item .value { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-
-  /* ===== OTHER STYLES ===== */
-  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
-  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: all 0.3s; }
-  .card:hover { background: var(--bg-card-hover); transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 24px rgba(255, 184, 0, 0.1); }
-  .card h4 { color: var(--accent); margin-bottom: 8px; font-size: 1rem; }
-  .card p { font-size: 0.9rem; color: var(--text-dim); margin: 0; }
-  
-  .callout { background: linear-gradient(135deg, #ffb80010, #a855f710); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
-  .callout-title { color: var(--accent); font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
-
-  table { width: 100%; border-collapse: collapse; margin: 16px 0; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
-  th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border); }
-  th { background: var(--bg-card-hover); color: var(--accent); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: var(--bg-card-hover); }
-
-  .checklist { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px; border-radius: 8px; transition: all 0.2s; cursor: pointer; }
-  .check-item:hover { background: var(--bg-card-hover); }
-  .check-item input[type="checkbox"] { display: none; }
-  .check-box { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 2px; }
-  .check-box::after { content: '✓'; color: var(--bg-dark); font-weight: 900; opacity: 0; transform: scale(0); transition: all 0.2s; }
-  .check-item input:checked + .check-box { background: var(--success); border-color: var(--success); }
-  .check-item input:checked + .check-box::after { opacity: 1; transform: scale(1); }
-  .check-item input:checked ~ .check-text { color: var(--text-dim); text-decoration: line-through; }
-  .check-text { flex: 1; transition: all 0.2s; font-size: 0.95rem; }
-  .check-counter { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-  .counter-value { color: var(--accent); font-weight: 700; font-size: 1.2rem; }
-
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--bg-dark); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-  @media (max-width: 900px) {
-    .container { grid-template-columns: 1fr; padding: 20px; gap: 20px; }
-    nav { position: relative; top: 0; max-height: none; display: flex; overflow-x: auto; padding-bottom: 12px; gap: 4px; }
-    nav h3 { display: none; }
-    nav a { flex-shrink: 0; font-size: 0.8rem; padding: 8px 12px; }
-    header { padding: 40px 20px; }
-  }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -199,7 +43,6 @@
 
   <main>
 
-    <!-- 1. CONCEPT -->
     <section id="concept">
       <h2>1. Концепция</h2>
       <p><strong>Train Your Hero</strong> — мобильная idle RPG, в которой персонаж автоматически сражается с манекенами, получая опыт и ресурсы. Игрок прокачивает глубокое дерево пассивок в стиле Path of Exile, крафтит и улучшает экипировку, открывая новые архетипы через разное оружие.</p>
@@ -216,7 +59,6 @@
       </ul>
     </section>
 
-    <!-- 2. CORE LOOP -->
     <section id="loop">
       <h2>2. Ядро геймплея (Core Loop)</h2>
       <p>Основной цикл, который удерживает игрока в игре:</p>
@@ -248,7 +90,6 @@
       </div>
     </section>
 
-    <!-- 3. COMBAT -->
     <section id="combat">
       <h2>3. Боевая система</h2>
       <ul>
@@ -260,47 +101,23 @@
       </ul>
     </section>
 
-    <!-- 4. DUMMIES -->
     <section id="dummies">
       <h2>4. Манекены (прогрессия сложности)</h2>
       <div class="cards">
-        <div class="card">
-          <h4>Первый манекен</h4>
-          <p>Безопасен, не наносит урона. Убийство занимает ~1 час.</p>
-        </div>
-        <div class="card">
-          <h4>Последующие</h4>
-          <p>HP растет в прогрессии (x2). Наносят урон: отражение, AoE, руны.</p>
-        </div>
-        <div class="card">
-          <h4>Переход</h4>
-          <p>Игрок сам выбирает манекен кнопками. Можно вернуться на слабого для фарма.</p>
-        </div>
+        <div class="card"><h4>Первый манекен</h4><p>Безопасен, не наносит урона. Убийство занимает ~1 час.</p></div>
+        <div class="card"><h4>Последующие</h4><p>HP растет в прогрессии (x2). Наносят урон: отражение, AoE, руны.</p></div>
+        <div class="card"><h4>Переход</h4><p>Игрок сам выбирает манекен кнопками. Можно вернуться на слабого для фарма.</p></div>
       </div>
     </section>
 
-    <!-- 5. TREE -->
     <section id="tree">
       <h2>5. Дерево пассивок</h2>
       <div class="cards">
-        <div class="card">
-          <h4>Структура</h4>
-          <p>Одно большое дерево (как в PoE), 200 нодов на старте.</p>
-        </div>
-        <div class="card">
-          <h4>Очки</h4>
-          <p>1 очко за уровень. Максимальный уровень на старте — 70.</p>
-        </div>
-        <div class="card">
-          <h4>Сброс</h4>
-          <p>За золото.</p>
-        </div>
-        <div class="card">
-          <h4>Содержимое</h4>
-          <p>Статы, процентные бонусы, ключевые пассивки, синергия с оружием.</p>
-        </div>
+        <div class="card"><h4>Структура</h4><p>Одно большое дерево (как в PoE), 200 нодов на старте.</p></div>
+        <div class="card"><h4>Очки</h4><p>1 очко за уровень. Максимальный уровень на старте — 70.</p></div>
+        <div class="card"><h4>Сброс</h4><p>За золото.</p></div>
+        <div class="card"><h4>Содержимое</h4><p>Статы, процентные бонусы, ключевые пассивки, синергия с оружием.</p></div>
       </div>
-
       <h3>Примеры пассивок (черновые)</h3>
       <table>
         <tr><th>Пассивка</th><th>Эффект</th></tr>
@@ -312,56 +129,27 @@
       </table>
     </section>
 
-    <!-- 6. ARCHETYPES -->
     <section id="archetypes">
       <h2>6. Архетипы (оружие)</h2>
       <div class="cards">
-        <div class="card card-weapon" style="text-align:center;">
-          <span style="font-size: 2.5rem; display:block; margin-bottom:8px;">🗡️</span>
-          <h4>Копье</h4>
-          <p>Пробитие брони. Игнорирует часть защиты манекена.</p>
-        </div>
-        <div class="card card-weapon" style="text-align:center;">
-          <span style="font-size: 2.5rem; display:block; margin-bottom:8px;">🔮</span>
-          <h4>Посох (Магия)</h4>
-          <p>Высокий крит-урон. Медленные, но мощные криты.</p>
-        </div>
-        <div class="card card-weapon" style="text-align:center;">
-          <span style="font-size: 2.5rem; display:block; margin-bottom:8px;">⚔️</span>
-          <h4>Меч</h4>
-          <p>Защита и HP. Выживаемость, отражение урона.</p>
-        </div>
-        <div class="card card-weapon" style="text-align:center;">
-          <span style="font-size: 2.5rem; display:block; margin-bottom:8px;">🏹</span>
-          <h4>Лук</h4>
-          <p>Скорость атаки. Быстрые удары, частые криты.</p>
-        </div>
+        <div class="card card-weapon" style="text-align:center;"><span style="font-size: 2.5rem; display:block; margin-bottom:8px;">🗡️</span><h4>Копье</h4><p>Пробитие брони. Игнорирует часть защиты манекена.</p></div>
+        <div class="card card-weapon" style="text-align:center;"><span style="font-size: 2.5rem; display:block; margin-bottom:8px;">🔮</span><h4>Посох (Магия)</h4><p>Высокий крит-урон. Медленные, но мощные криты.</p></div>
+        <div class="card card-weapon" style="text-align:center;"><span style="font-size: 2.5rem; display:block; margin-bottom:8px;">⚔️</span><h4>Меч</h4><p>Защита и HP. Выживаемость, отражение урона.</p></div>
+        <div class="card card-weapon" style="text-align:center;"><span style="font-size: 2.5rem; display:block; margin-bottom:8px;">🏹</span><h4>Лук</h4><p>Скорость атаки. Быстрые удары, частые криты.</p></div>
       </div>
     </section>
 
-    <!-- 7. STATS -->
     <section id="stats">
       <h2>7. Характеристики персонажа</h2>
       <div class="cards">
-        <div class="card"><h4>HP</h4></div>
-        <div class="card"><h4>Урон</h4></div>
-        <div class="card"><h4>Сила</h4></div>
-        <div class="card"><h4>Ловкость</h4></div>
-        <div class="card"><h4>Интеллект</h4></div>
-        <div class="card"><h4>Крит шанс</h4></div>
-        <div class="card"><h4>Крит урон</h4></div>
-        <div class="card"><h4>Защита</h4></div>
-        <div class="card"><h4>Уклонение</h4></div>
-        <div class="card"><h4>Удача</h4></div>
+        <div class="card"><h4>HP</h4></div><div class="card"><h4>Урон</h4></div><div class="card"><h4>Сила</h4></div><div class="card"><h4>Ловкость</h4></div><div class="card"><h4>Интеллект</h4></div><div class="card"><h4>Крит шанс</h4></div><div class="card"><h4>Крит урон</h4></div><div class="card"><h4>Защита</h4></div><div class="card"><h4>Уклонение</h4></div><div class="card"><h4>Удача</h4></div>
       </div>
     </section>
 
-    <!-- 8. LOOT -->
     <section id="loot">
       <h2>8. Экипировка и крафт</h2>
       <h3>Слоты экипировки (на старте)</h3>
       <p>Оружие · Нагрудник · Шлем · Перчатки <em style="color: var(--text-dim);">(позже — больше слотов)</em></p>
-
       <h3>Редкость предметов</h3>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin:16px 0;">
         <span style="padding:8px 16px; border-radius:8px; font-size:0.85rem; font-weight:600; color:#b0b0b0; border:1px solid #b0b0b0; background:#b0b0b010;">Обычный</span>
@@ -371,14 +159,12 @@
         <span style="padding:8px 16px; border-radius:8px; font-size:0.85rem; font-weight:600; color:#ff8c42; border:1px solid #ff8c42; background:#ff8c4210;">Легендарный</span>
       </div>
       <p>Чем выше редкость — тем лучше доступные статы. Система как в Path of Exile.</p>
-
       <h3>Крафт</h3>
       <ul>
         <li>Как в ММО: выпадает ресурс → из него крафтится предмет.</li>
         <li>Ресурсами можно накрафчивать статы на предмете (как в PoE).</li>
         <li>Броня имеет число, снижающее урон, плюс дополнительные статы (+HP, +защита).</li>
       </ul>
-
       <h3>Инвентарь</h3>
       <ul>
         <li>Лимит слотов есть (количество — в разработке).</li>
@@ -386,7 +172,6 @@
       </ul>
     </section>
 
-    <!-- 9. ECONOMY -->
     <section id="economy">
       <h2>9. Экономика</h2>
       <table>
@@ -398,7 +183,6 @@
       </table>
     </section>
 
-    <!-- 10. MONETIZATION -->
     <section id="monetization">
       <h2>10. Монетизация</h2>
       <div class="cards">
@@ -409,7 +193,6 @@
       </div>
     </section>
 
-    <!-- 11. RETENTION -->
     <section id="retention">
       <h2>11. Удержание (Retention)</h2>
       <ul>
@@ -420,15 +203,12 @@
       </ul>
     </section>
 
-    <!-- 12. ARMOR CALCULATOR -->
     <section id="armor">
       <h2>12. Защитные механики (Броня)</h2>
       <p>Броня снижает входящий урон по формуле с убывающей полезностью. Чем больше брони, тем меньше прирост снижения урона.</p>
-      
       <div class="formula-display">
         Снижение = <span style="display:inline-block; text-align:center; vertical-align:middle;"><span style="border-bottom:1px solid var(--accent); padding:0 4px;">A</span><br><span style="padding:0 4px;">A + D</span></span>
       </div>
-
       <div class="calc-box">
         <div class="calc-controls">
           <div class="control-group">
@@ -446,33 +226,20 @@
             </div>
           </div>
         </div>
-
         <div class="result-stats">
-          <div class="res-item">
-            <span class="label">Снижение урона</span>
-            <span class="value" id="armorReductionRes">50%</span>
-          </div>
-          <div class="res-item">
-            <span class="label">Итоговый полученный урон</span>
-            <span class="value" id="armorFinalDmgRes">500</span>
-          </div>
+          <div class="res-item"><span class="label">Снижение урона</span><span class="value" id="armorReductionRes">50%</span></div>
+          <div class="res-item"><span class="label">Итоговый полученный урон</span><span class="value" id="armorFinalDmgRes">500</span></div>
         </div>
-
-        <div class="chart-container">
-          <canvas id="armorChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="armorChart"></canvas></div>
       </div>
     </section>
 
-    <!-- 13. LUCK CALCULATOR -->
     <section id="luck">
       <h2>13. Удача и Лут</h2>
       <p>Удача изменяет шансы выпадения предметов. Механика использует возведение весов в степень <code>alpha</code>. Чем ниже <code>alpha</code>, тем чаще падают редкие предметы.</p>
-      
       <div class="formula-display">
         alpha = <span style="display:inline-block; text-align:center; vertical-align:middle;"><span style="border-bottom:1px solid var(--accent); padding:0 4px;">K</span><br><span style="padding:0 4px;">K + cappedLuck</span></span>
       </div>
-
       <div class="calc-box">
         <div class="calc-controls">
           <div class="control-group">
@@ -491,89 +258,31 @@
             </div>
           </div>
         </div>
-
         <div class="result-stats" style="grid-template-columns: 1fr 1fr 1fr;">
-          <div class="res-item">
-            <span class="label">Alpha (Множитель)</span>
-            <span class="value" id="luckAlphaRes">0.8</span>
-          </div>
-          <div class="res-item">
-            <span class="label">Шанс обычного</span>
-            <span class="value" id="luckCommonRes">95%</span>
-          </div>
-          <div class="res-item">
-            <span class="label">Шанс легендарного</span>
-            <span class="value" id="luckLegendaryRes">0.01%</span>
-          </div>
+          <div class="res-item"><span class="label">Alpha (Множитель)</span><span class="value" id="luckAlphaRes">0.8</span></div>
+          <div class="res-item"><span class="label">Шанс обычного</span><span class="value" id="luckCommonRes">95%</span></div>
+          <div class="res-item"><span class="label">Шанс легендарного</span><span class="value" id="luckLegendaryRes">0.01%</span></div>
         </div>
-
-        <div class="chart-container">
-          <canvas id="luckChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="luckChart"></canvas></div>
       </div>
     </section>
 
-    <!-- 14. TODO -->
     <section id="todo">
       <h2>14. Открытые вопросы</h2>
       <p style="color: var(--text-dim); margin-bottom: 20px;">Кликай на пункты, чтобы отмечать выполненные. Прогресс сохраняется в браузере.</p>
-
       <div class="checklist">
-        <div class="check-counter">
-          <span>Прогресс проработки</span>
-          <span class="counter-value" id="counter">0 / 10</span>
-        </div>
+        <div class="check-counter"><span>Прогресс проработки</span><span class="counter-value" id="counter">0 / 10</span></div>
         <div id="checklist-items">
-          <label class="check-item">
-            <input type="checkbox" data-id="q1">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Активность игрока:</strong> клики? активные скиллы? что делает игрок во время боя?</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q2">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Скиллы на оружии:</strong> 5–7 скиллов — активные кнопки или пассивные эффекты?</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q3">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Смерть персонажа:</strong> таймер? потеря прогресса? реклама за воскрешение?</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q4">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Конкретные пассивки:</strong> проработать 20–30 ключевых нодов дерева.</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q5">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Лимит инвентаря:</strong> сколько слотов? что при переполнении?</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q6">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Камни для ролла статов:</strong> как работает ролл? можно ли зафиксировать стат?</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q7">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Баланс:</strong> формулы урона, HP манекенов, дропа — требуют прототипа.</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q8">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Название:</strong> «Train Your Hero» — рабочее. Подумать над уникальным.</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q9">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Оффлайн-прогресс:</strong> добавлять ли позже? в каком виде?</span>
-          </label>
-          <label class="check-item">
-            <input type="checkbox" data-id="q10">
-            <span class="check-box"></span>
-            <span class="check-text"><strong>Типы урона:</strong> добавлять ли стихии (огонь, лед, молния)?</span>
-          </label>
+          <label class="check-item"><input type="checkbox" data-id="q1"><span class="check-box"></span><span class="check-text"><strong>Активность игрока:</strong> клики? активные скиллы? что делает игрок во время боя?</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q2"><span class="check-box"></span><span class="check-text"><strong>Скиллы на оружии:</strong> 5–7 скиллов — активные кнопки или пассивные эффекты?</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q3"><span class="check-box"></span><span class="check-text"><strong>Смерть персонажа:</strong> таймер? потеря прогресса? реклама за воскрешение?</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q4"><span class="check-box"></span><span class="check-text"><strong>Конкретные пассивки:</strong> проработать 20–30 ключевых нодов дерева.</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q5"><span class="check-box"></span><span class="check-text"><strong>Лимит инвентаря:</strong> сколько слотов? что при переполнении?</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q6"><span class="check-box"></span><span class="check-text"><strong>Камни для ролла статов:</strong> как работает ролл? можно ли зафиксировать стат?</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q7"><span class="check-box"></span><span class="check-text"><strong>Баланс:</strong> формулы урона, HP манекенов, дропа — требуют прототипа.</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q8"><span class="check-box"></span><span class="check-text"><strong>Название:</strong> «Train Your Hero» — рабочее. Подумать над уникальным.</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q9"><span class="check-box"></span><span class="check-text"><strong>Оффлайн-прогресс:</strong> добавлять ли позже? в каком виде?</span></label>
+          <label class="check-item"><input type="checkbox" data-id="q10"><span class="check-box"></span><span class="check-text"><strong>Типы урона:</strong> добавлять ли стихии (огонь, лед, молния)?</span></label>
         </div>
       </div>
     </section>
@@ -582,12 +291,10 @@
 </div>
 
 <script>
-  // ==== PROGRESS BAR & NAV ====
   const progressBar = document.getElementById('progressBar');
   window.addEventListener('scroll', () => {
     const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
     progressBar.style.width = scrolled + '%';
-    
     let current = '';
     document.querySelectorAll('section').forEach(section => {
       if (window.scrollY >= section.offsetTop - 100) current = section.id;
@@ -598,15 +305,12 @@
     });
   });
 
-  // ==== CHECKLIST ====
   const checkboxes = document.querySelectorAll('.check-item input[type="checkbox"]');
   const counter = document.getElementById('counter');
-
   function updateCounter() {
     const checked = document.querySelectorAll('.check-item input:checked').length;
     counter.textContent = checked + ' / ' + checkboxes.length;
   }
-
   checkboxes.forEach(cb => {
     const saved = localStorage.getItem('tyh_' + cb.dataset.id);
     if (saved === 'true') cb.checked = true;
@@ -617,7 +321,6 @@
   });
   updateCounter();
 
-  // ==== UTILS ====
   function syncInputs(slider, input, callback) {
     slider.addEventListener('input', () => { input.value = slider.value; callback(); });
     input.addEventListener('input', () => { 
@@ -630,12 +333,10 @@
     });
   }
 
-  // ==== CHART.JS DEFAULTS ====
   Chart.defaults.color = '#9494a8';
   Chart.defaults.font.family = 'system-ui';
   Chart.defaults.scale.grid.color = '#2a2a45';
 
-  // ==== ARMOR LOGIC ====
   const armorDmgSlider = document.getElementById('armorDmgSlider');
   const armorDmgInput = document.getElementById('armorDmgInput');
   const armorValSlider = document.getElementById('armorValSlider');
@@ -643,26 +344,17 @@
   const armorReductionRes = document.getElementById('armorReductionRes');
   const armorFinalDmgRes = document.getElementById('armorFinalDmgRes');
 
-  // Init Armor Chart
   const ctxArmor = document.getElementById('armorChart').getContext('2d');
   let armorChart = new Chart(ctxArmor, {
     type: 'line',
     data: {
       labels: [],
       datasets: [{
-        label: 'Полученный урон',
-        data: [],
-        borderColor: '#ffb800',
-        backgroundColor: 'rgba(255, 184, 0, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        pointRadius: 0,
-        tension: 0.4
+        label: 'Полученный урон', data: [], borderColor: '#ffb800', backgroundColor: 'rgba(255, 184, 0, 0.1)', borderWidth: 2, fill: true, pointRadius: 0, tension: 0.4
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
         x: { title: { display: true, text: 'Броня (A)' } },
@@ -674,15 +366,12 @@
   function updateArmor() {
     let D = parseFloat(armorDmgInput.value);
     let A = parseFloat(armorValInput.value);
-    
-    // Формула: Снижение = A / (A + D). Итоговый урон = D * (1 - A/(A+D)) = D^2 / (D+A)
     let reduction = A / (A + D);
-    let finalDmg = D * (1 - reduction); // или Math.pow(D, 2) / (D + A)
+    let finalDmg = D * (1 - reduction);
 
     armorReductionRes.textContent = (reduction * 100).toFixed(1) + '%';
     armorFinalDmgRes.textContent = finalDmg.toFixed(0);
 
-    // Update chart for current D
     let labels = [];
     let data = [];
     for(let i = 0; i <= 5000; i += 250) {
@@ -692,7 +381,7 @@
     }
     armorChart.data.labels = labels;
     armorChart.data.datasets[0].data = data;
-    armorChart.data.datasets[0].label = `Урон при входящем = ${D}`;
+    armorChart.data.datasets[0].label = 'Урон при входящем = ' + D;
     armorChart.update();
   }
 
@@ -700,56 +389,38 @@
   syncInputs(armorValSlider, armorValInput, updateArmor);
   updateArmor();
 
-  // ==== LUCK LOGIC ====
   const luckSlider = document.getElementById('luckSlider');
   const luckInput = document.getElementById('luckInput');
   const enemyLuckSlider = document.getElementById('enemyLuckSlider');
   const enemyLuckInput = document.getElementById('enemyLuckInput');
-  
   const luckAlphaRes = document.getElementById('luckAlphaRes');
   const luckCommonRes = document.getElementById('luckCommonRes');
   const luckLegendaryRes = document.getElementById('luckLegendaryRes');
 
-  // Init Luck Chart
   const ctxLuck = document.getElementById('luckChart').getContext('2d');
   let luckChart = new Chart(ctxLuck, {
     type: 'bar',
     data: {
       labels: ['Обычный', 'Необычный', 'Редкий', 'Эпический', 'Легендарный'],
       datasets: [{
-        label: 'Шанс выпадения (%)',
-        data: [0, 0, 0, 0, 0],
-        backgroundColor: [
-          '#b0b0b0',
-          '#4a8eff',
-          '#ffd700',
-          '#c084fc',
-          '#ff8c42'
-        ],
-        borderWidth: 0,
-        borderRadius: 4
+        label: 'Шанс выпадения (%)', data: [0, 0, 0, 0, 0],
+        backgroundColor: ['#b0b0b0', '#4a8eff', '#ffd700', '#c084fc', '#ff8c42'], borderWidth: 0, borderRadius: 4
       }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: {
-        y: { type: 'logarithmic', title: { display: true, text: 'Шанс (%)' }, min: 0.0001 }
-      }
+      scales: { y: { type: 'logarithmic', title: { display: true, text: 'Шанс (%)' }, min: 0.0001 } }
     }
   });
 
-  // Базовые веса: Обычный(1M), Необычный(10K), Редкий(100), Эпический(1), Легендарный(0.01)
   const baseWeights = [1000000, 10000, 100, 1, 0.01];
 
   function updateLuck() {
     let L = parseFloat(luckInput.value);
     let K = parseFloat(enemyLuckInput.value);
-    
     let cappedLuck = Math.min(L, 1000);
     let alpha = K / (K + cappedLuck);
-    
     let adjusted = baseWeights.map(w => Math.pow(w, alpha));
     let sum = adjusted.reduce((a, b) => a + b, 0);
     let chances = adjusted.map(w => (w / sum) * 100);
@@ -765,7 +436,6 @@
   syncInputs(luckSlider, luckInput, updateLuck);
   syncInputs(enemyLuckSlider, enemyLuckInput, updateLuck);
   updateLuck();
-
 </script>
 
 </body>
